@@ -8,5 +8,9 @@
   },
   "keywords": [],
   "author": "fwfy",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@fwfy/futil": "^1.0.1",
+    "express": "^4.21.1"
+  }
 }
