@@ -1,0 +1,12 @@
+{
+  "name": "getpregnant",
+  "version": "1.0.0",
+  "description": "Get Pregnant is an application that allows people to 'own' a *.is-a.pregnant.horse domain.",
+  "main": "gpsrv.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "fwfy",
+  "license": "ISC"
+}
