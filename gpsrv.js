@@ -46,7 +46,7 @@ app.get('/query', (req, res) => {
     res.end(data.dest);
 });
 
-app.post("/update", (req, res) => {
+app.post("/update", async (req, res) => {
     let auth = req.get("Authorization");
     let hash = createHash("sha512").update(auth).digest('hex');
     let subdomain = req.body.subdomain;
@@ -63,45 +63,65 @@ app.post("/update", (req, res) => {
         res.status(429);
         return res.end("Too Many Requests");
     }
-
+    if(!dest.match(/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/)) {
+        res.status(400);
+        return res.end(`Bad Request: not a valid IPV4 address`);
+    }
+    let domain = kdb.domains[subdomain];
+    domain.lastModified = Date.now();
+    await cloudflare.dns.records.edit(domain.cfRecordID, {
+        content: dest,
+        proxied: false,
+        zone_id: process.env.CF_ZONE_ID
+    });
+    domain.dest = dest;
+    res.end(`OK`);
 });
 
 app.post("/provision", async (req, res) => {
-    if(req.get("Authorization")) {
-        let hash = createHash("sha512").update(req.get("Authorization")).digest('hex');
-        if(hash == kdb.provisionKey) {
-            let data = req.body;
-            if(!data.subdomain) {
-                res.status(400);
-                return res.end(`Bad Request: missing subdomain`);
+    try {
+        if(req.get("Authorization")) {
+            let hash = createHash("sha512").update(req.get("Authorization")).digest('hex');
+            if(hash == kdb.provisionKey) {
+                let data = req.body;
+                if(!data.subdomain) {
+                    res.status(400);
+                    return res.end(`Bad Request: missing subdomain`);
+                }
+                if(!data.dest) {
+                    res.status(400);
+                    return res.end(`Bad Request: missing destination`);
+                }
+                let subKey = randomBytes(16).toString('hex');
+                let subKeyHash = createHash("sha512").update(subKey).digest('hex');
+
+                let record = await cloudflare.dns.records.create({
+                    type: "A",
+                    content: data.dest,
+                    name: `${data.subdomain}${tld}`,
+                    comment: `Automatically created by GetPregnant on ${Date.now()} for user ${subKeyHash.substr(0,16)}.`,
+                    proxied: false,
+                    zone_id: process.env.CF_ZONE_ID
+                });
+                kdb.domains[data.subdomain] = {
+                    subKeyHash,
+                    dest: data.dest,
+                    lastModified: 0,
+                    cfRecordID: record.id
+                }
+                res.end(`Provisioned domain ${data.subdomain}${tld}. Key: ${subKey}`);
+            } else {
+                res.status(401);
+                res.end(`Unauthorized.`);    
             }
-            if(!data.dest) {
-                res.status(400);
-                return res.end(`Bad Request: missing destination`);
-            }
-            let subKey = randomBytes(16).toString('hex');
-            let subKeyHash = createHash("sha512").update(subKey).digest('hex');
-            kdb.domains[data.subdomain] = {
-                subKeyHash,
-                dest: data.dest,
-                lastModified: 0
-            }
-            await cloudflare.dns.records.create({
-                type: "A",
-                content: data.dest,
-                name: `${data.subdomain}${tld}`,
-                comment: `Automatically created by GetPregnant on ${Date.now()} for user ${subKeyHash.substr(0,16)}.`,
-                proxied: false,
-                zone_id: process.env.CF_ZONE_ID
-            });
-            res.end(`Provisioned domain ${data.subdomain}${tld}. Key: ${subKey}`);
         } else {
             res.status(401);
-            res.end(`Unauthorized.`);    
+            res.end(`Unauthorized.`);
         }
-    } else {
-        res.status(401);
-        res.end(`Unauthorized.`);
+    } catch(e) { 
+        console.log(e);
+        res.status(500);
+        res.end("Internal Server Error");
     }
 });
 
