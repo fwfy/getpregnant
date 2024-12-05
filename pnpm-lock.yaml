@@ -9,16 +9,16 @@ importers:
   .:
     dependencies:
       '@fwfy/futil':
-        specifier: ^1.0.1
+        specifier: ~1.0.1
         version: 1.0.1
       cloudflare:
-        specifier: ^3.5.0
+        specifier: ~3.5.0
         version: 3.5.0
       dotenv:
-        specifier: ^16.4.7
+        specifier: ~16.4.7
         version: 16.4.7
       express:
-        specifier: ^4.21.1
+        specifier: ~4.21.1
         version: 4.21.1
 
 packages:
@@ -286,6 +286,10 @@ packages:
     resolution: {integrity: sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==}
     engines: {node: '>=0.6'}
 
+  qs@6.13.1:
+    resolution: {integrity: sha512-EJPeIn0CYrGu+hli1xilKAPXODtJ12T0sP63Ijx2/khC2JtuaN3JyNIpvmnkmaEtha9ocbG4A4cMcr+TvqvwQg==}
+    engines: {node: '>=0.6'}
+
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
@@ -432,7 +436,7 @@ snapshots:
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
       node-fetch: 2.7.0
-      qs: 6.13.0
+      qs: 6.13.1
       web-streams-polyfill: 3.3.3
     transitivePeerDependencies:
       - encoding
@@ -640,6 +644,10 @@ snapshots:
       ipaddr.js: 1.9.1
 
   qs@6.13.0:
+    dependencies:
+      side-channel: 1.0.6
+
+  qs@6.13.1:
     dependencies:
       side-channel: 1.0.6
 
