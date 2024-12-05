@@ -86,33 +86,33 @@ app.post("/update", async (req, res) => {
 });
 
 app.post("/provision", async (req, res) => {
+    if (!req.get("Authorization")) {
+        res.status(401);
+        res.end(`Unauthorized.`);
+        return;
+    }
+
+    let hash = createHash("sha512").update(req.get("Authorization")).digest('hex');
+    if (hash != kdb.provisionKey) {
+        res.status(401);
+        res.end(`Unauthorized.`);
+    }
+
+    let data = req.body;
+    if (!data.subdomain || !data.dest) {
+        res.status(400);
+        return res.end(`Bad Request: missing required parameters (subdomain, dest)`);
+    }
+
+    let subKey = randomBytes(16).toString('hex');
+    let subKeyHash = createHash("sha512").update(subKey).digest('hex');
+
     try {
-        if (!req.get("Authorization")) {
-            res.status(401);
-            res.end(`Unauthorized.`);
-            return;
-        }
-
-        let hash = createHash("sha512").update(req.get("Authorization")).digest('hex');
-        if (hash != kdb.provisionKey) {
-            res.status(401);
-            res.end(`Unauthorized.`);
-        }
-
-        let data = req.body;
-        if (!data.subdomain || !data.dest) {
-            res.status(400);
-            return res.end(`Bad Request: missing required parameters (subdomain, dest)`);
-        }
-
-        let subKey = randomBytes(16).toString('hex');
-        let subKeyHash = createHash("sha512").update(subKey).digest('hex');
-
         let record = await cloudflare.dns.records.create({
             type: "A",
             content: data.dest,
             name: `${data.subdomain}${tld}`,
-            comment: `Automatically created by GetPregnant on ${Date.now()} for user ${subKeyHash.substr(0, 16)}.`,
+            comment: `Automatically created by GetPregnant on ${Date.now()} for user ${subKeyHash.substring(0, 16)}.`,
             proxied: false,
             zone_id: process.env.CF_ZONE_ID
         });
